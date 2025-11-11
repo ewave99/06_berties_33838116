@@ -7,6 +7,7 @@ router.get('/',function(req, res, next){
     res.render('index.ejs')
 });
 
+// Any other general routes.
 router.get('/about',function(req, res, next){
     res.render('about.ejs')
 });

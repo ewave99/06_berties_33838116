@@ -2,15 +2,18 @@
 const express = require("express");
 const router = express.Router();
 
+// Render the search page.
 router.get('/search', function(req, res, next) {
     res.render("search.ejs");
 });
 
+// Render the search result page.
 router.get('/search-result', function (req, res, next) {
     //searching in the database
     res.send("You searched for: " + req.query.keyword);
 });
 
+// Render the page that lists all the books.
 router.get('/list', function(req, res, next) {
     // query database to get all the books
     let sqlquery = "SELECT * FROM books";
@@ -19,12 +22,15 @@ router.get('/list', function(req, res, next) {
         if (err)
             next(err);
         console.log(result);
+        // Pass the result of the SQL query to list.ejs, which will render them as a table.
         res.render("list.ejs", {availableBooks: result});
     });
 });
 
+// Render page where the user can add a book.
 router.get("/addbook", (req, res, next) => res.render("addbook.ejs"));
 
+// Render result page for adding a book.
 router.post('/bookadded', function (req, res, next) {
     // SQL query to save data in database
     let sqlquery = "INSERT INTO books (name, price) VALUES (?,?)";
@@ -35,6 +41,7 @@ router.post('/bookadded', function (req, res, next) {
         if (err)
             next(err);
         else
+            // Show the user the book they added to the database.
             res.send(`This book is added to database, name: ${req.body.book_title}, price: £${req.body.book_price}.`);
     });
 })
