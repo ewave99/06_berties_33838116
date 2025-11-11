@@ -21,9 +21,22 @@ router.get('/list', function(req, res, next) {
     db.query(sqlquery, (err, result) => {
         if (err)
             next(err);
-        console.log(result);
+        //console.log(result);
         // Pass the result of the SQL query to list.ejs, which will render them as a table.
         res.render("list.ejs", {availableBooks: result});
+    });
+});
+
+// Render the page that lists books less than £20.
+router.get("/bargainbooks", (req, res, next) => {
+    // Our SQL query
+    let sqlQuery = "SELECT * FROM books WHERE price < 20";
+    // Execute the query
+    db.query(sqlQuery, (err, result) => {
+        if (err)
+            next(err);
+        // Pass result of query to bargainbooks.ejs, which will render the result as a table.
+        res.render("bargainbooks.ejs", {availableBooks: result});
     });
 });
 
