@@ -41,3 +41,13 @@ a:link {
     text-decoration: none;
     padding:5px;
   }
+
+th {
+  color: white;
+  background-color: orangered;
+  padding: 5px 10px;
+}
+
+td {
+  padding: 5px 10px;
+}

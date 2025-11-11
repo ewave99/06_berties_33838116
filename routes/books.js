@@ -18,7 +18,8 @@ router.get('/list', function(req, res, next) {
     db.query(sqlquery, (err, result) => {
         if (err)
             next(err);
-        res.send(result);
+        console.log(result);
+        res.render("list.ejs", {availableBooks: result});
     });
 });
 
