@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Search results in <%=shopData.shopName%></title>
+        <link rel="stylesheet"  type="text/css" href="/main.css" />
+    </head>
+    <body>
+        <h1>Search results in <%=shopData.shopName%></h1>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Price</th>
+            </tr>
+            <% for (let {id, name, price} of searchResults) { %>
+            <tr>
+                <td><%= id %> </td>
+                <td><%= name %></td>
+                <td><%= price %> GBP</td>
+            </tr>
+            <% } %>
+        </table>
+    </body>
+</html>

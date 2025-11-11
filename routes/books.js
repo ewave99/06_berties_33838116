@@ -8,9 +8,18 @@ router.get('/search', function(req, res, next) {
 });
 
 // Render the search result page.
-router.get('/search-result', function (req, res, next) {
+router.get('/search_result', function (req, res, next) {
     //searching in the database
-    res.send("You searched for: " + req.query.keyword);
+    // res.send("You searched for: " + req.query.search_text);
+
+    // SQL query. PARTIAL NAME MATCH.
+    let sqlQuery = `SELECT * FROM books WHERE name LIKE '%${req.query.search_text}%'`;
+
+    // Perform the query
+    db.query(sqlQuery, (err, result) => {
+        if (err) next (err);
+        res.render("search_result.ejs", {searchResults: result});
+    });
 });
 
 // Render the page that lists all the books.
