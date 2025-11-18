@@ -13,6 +13,18 @@ router.get('/register', function (req, res, next) {
     res.render('register.ejs')
 })
 
+// Render page that lists all the users in the 'users' table in our database.
+router.get('/list', function (req, res, next) {
+    // Query database to get list of users.
+    const sqlQuery = "SELECT username, first_name, last_name FROM users ORDER BY username ASC";
+    // Execute the query.
+    db.query(sqlQuery, (err, result) => {
+        if (err)
+            next(err);
+        else
+            res.render("list_users.ejs", {userData: result});
+    });
+});
 
 // Render the registration success page.
 router.post('/registered', function (req, res, next) {
