@@ -25,3 +25,7 @@ Rather than hard-coding the database username and password into `index.js`, the 
 These attributes can then be accessed from `index.js` using the format `process.env.KEY`.
 The `.env` file is added to the gitignore so it is not visible from GitHub.
 The `.env` file cannot be accessed via the web server.
+
+## Audit
+
+There is a table in the database, `logins`, to store attempted logins. For each attempt, the username is stored, along with when the attempt was performed and whether it was successful. 
