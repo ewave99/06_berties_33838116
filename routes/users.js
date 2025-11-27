@@ -75,13 +75,15 @@ router.get("/audit", redirectLogin, function (req, res, next) {
 router.post('/registered', 
     [
         check("email").isEmail(), 
-        check("username").isLength({ min: 5, max: 20 })
+        check("username").isLength({ min: 5, max: 20 }),
+        check("password").isLength({ min: 8 })
     ], 
     (req, res, next) => {
         // Check whether there are any errors with the form submission.
         const errors = validationResult(req);
+        // console.log(errors.errors);
         if (!errors.isEmpty())
-            return res.render("./register", {hasError: true});
+            return res.render("./register", {hasError: true, errors: errors.errors});
 
         // Save data in database
         const plainPassword = req.body.password;
@@ -92,9 +94,13 @@ router.post('/registered',
             const {username, first, last, email} = req.body;
             const newRecord = [username, first, last, email, hashedPassword];
 
+            if (err)
+                return res.send(err);
+
             db.query(dbQuery, newRecord, (err, result) => {
                 if (err)
                     return next(err);
+
                 let message = `Hello, ${username}. You are now registered! We will send an email to you at ${email}.<br>`;
                 message += `Your password is ${plainPassword} and your hashed password is ${hashedPassword}<br>`;
                 message += "<a href='/'>Home</a>";
@@ -125,19 +131,19 @@ router.post("/loggedin", function (req, res, next) {
             const params = [username, dateString, successful];
 
             if (err)
-                res.send(err);
-            else
-                db.query(sqlQuery, params, (err, result) => {
-                    if (err)
-                        return res.send(err);
+                return res.send(err);
 
-                    if (successful === true) {
-                        req.session.userId = req.body.username;
-                        return res.send("Login successful. <a href='/'>Home</a>");
-                    }
+            db.query(sqlQuery, params, (err, result) => {
+                if (err)
+                    return res.send(err);
 
-                    res.send("Sorry, your login was unsuccessful. Password did not match. Attempt has been logged.");
-                });
+                if (successful === true) {
+                    req.session.userId = req.body.username;
+                    return res.send("Login successful. <a href='/'>Home</a>");
+                }
+
+                res.send("Sorry, your login was unsuccessful. Password did not match. Attempt has been logged.");
+            });
         });
     });
 });
