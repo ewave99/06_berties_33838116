@@ -1,6 +1,25 @@
-// Import modules
+// Import express and bcrypt
 const express = require("express")
 const bcrypt = require('bcrypt');
+
+function redirectLogin(req, res, next) {
+    if (!req.session.userId)
+        res.redirect("./login");
+    else
+        next();
+}
+
+function generateDateString() {
+    const datetime = new Date();
+    const year = datetime.getFullYear();
+    const month = datetime.getMonth();
+    const day = datetime.getDate();
+    const hour = datetime.getHours();
+    const min = datetime.getMinutes();
+    const sec = datetime.getSeconds();
+
+    return `${year}-${month}-${day} ${hour}:${min}:${sec}`;
+}
 
 // Create a new router
 const router = express.Router()
@@ -18,8 +37,17 @@ router.get("/login", function (req, res, next) {
     res.render("login.ejs");
 });
 
+// Log the user out and destroy the current login-session
+router.get("/logout", redirectLogin, (req, res) => {
+    req.session.destroy(err => {
+        if (err)
+            return res.redirect("./");
+        res.send("You are now logged out. <a href='/'>Home</a>");
+    });
+});
+
 // Render page that lists all the users in the 'users' table in our database.
-router.get('/list', function (req, res, next) {
+router.get('/list', redirectLogin, function (req, res, next) {
     // Query database to get list of users.
     const sqlQuery = "SELECT username, first_name, last_name FROM users ORDER BY username ASC";
     // Execute the query.
@@ -31,7 +59,7 @@ router.get('/list', function (req, res, next) {
     });
 });
 
-router.get("/audit", function (req, res, next) {
+router.get("/audit", redirectLogin, function (req, res, next) {
     // Query database to get list of login attempts.
     const sqlQuery = "SELECT username, login_datetime, successful FROM logins";
     // Execute the query
@@ -82,17 +110,7 @@ router.post("/loggedin", function (req, res, next) {
             // Compare the user's password with the hashed password in the database.
             bcrypt.compare(req.body.password, hashedPassword, function (err, result) {
                 const username = req.body.username;
-
-                const datetime = new Date();
-                const year = datetime.getFullYear();
-                const month = datetime.getMonth();
-                const day = datetime.getDate();
-                const hour = datetime.getHours();
-                const min = datetime.getMinutes();
-                const sec = datetime.getSeconds();
-
-                const dateString = `${year}-${month}-${day} ${hour}:${min}:${sec}`;
-
+                const dateString = generateDateString();
                 const successful = result;
 
                 const sqlQuery = "INSERT INTO logins (username, login_datetime, successful) VALUES (?, ?, ?)";
@@ -104,8 +122,10 @@ router.post("/loggedin", function (req, res, next) {
                     db.query(sqlQuery, params, (err, result) => {
                         if (err)
                             res.send(err);
-                        if (successful === true)
-                            res.send("Login successful.");
+                        if (successful === true) {
+                            req.session.userId = req.body.username;
+                            res.send("Login successful. <a href='/'>Home</a>");
+                        }
                         else
                             res.send("Sorry, your login was unsuccessful. Password did not match. Attempt has been logged.");
                     });

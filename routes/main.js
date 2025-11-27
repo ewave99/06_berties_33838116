@@ -4,7 +4,7 @@ const router = express.Router()
 
 // Handle our routes
 router.get('/',function(req, res, next){
-    res.render('index.ejs')
+    res.render('index.ejs', { userId: req.session.userId });
 });
 
 // Any other general routes.

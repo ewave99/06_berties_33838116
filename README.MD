@@ -29,3 +29,9 @@ The `.env` file cannot be accessed via the web server.
 ## Audit
 
 There is a table in the database, `logins`, to store attempted logins. For each attempt, the username is stored, along with when the attempt was performed and whether it was successful. 
+
+## Restricted access
+
+Access is restricted to logged-in users for: `/users/list` and `/users/audit`. 
+
+The "Register" link only displays for logged-out users.

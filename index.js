@@ -1,14 +1,14 @@
-// Import express, ejs, MySQL2, dotenv
-var express = require ('express')
-var ejs = require('ejs')
+// Import express, express-session, ejs, MySQL2, dotenv, path
+var express = require("express");
+var session = require("express-session");
+var ejs = require("ejs");
 var mysql = require("mysql2");
 var dotenv = require("dotenv");
-
-const path = require('path')
+const path = require('path');
 
 // Create the express application object
-const app = express()
-const port = 8000
+const app = express();
+const port = 8000;
 
 // Configure dotenv
 dotenv.config();
@@ -24,6 +24,15 @@ const db = mysql.createPool({
     queueLimit: 0,
 });
 global.db = db;
+
+app.use(session({
+    secret: process.env.BB_SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        expires: 600000
+    }
+}));
 
 // Tell Express that we want to use EJS as the templating engine
 app.set('view engine', 'ejs')
@@ -50,4 +59,4 @@ const booksRoutes = require('./routes/books')
 app.use('/books', booksRoutes)
 
 // Start the web app listening
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+app.listen(port, () => console.log(`Example app listening on port ${port}!`));
