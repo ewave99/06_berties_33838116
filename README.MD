@@ -35,3 +35,8 @@ There is a table in the database, `logins`, to store attempted logins. For each 
 Access is restricted to logged-in users for: `/users/list` and `/users/audit`. 
 
 The "Register" link only displays for logged-out users.
+
+## Sanitisation
+
+All fields on the 'Register' and 'Login' forms are sanitised to protect against XSS attacks.
+The 'Book title' field in the 'Add book' form is sanitised as the result is displayed on the response page after the form is submitted.

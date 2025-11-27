@@ -1,9 +1,10 @@
-// Import express, express-session, ejs, MySQL2, dotenv, path
-var express = require("express");
-var session = require("express-session");
-var ejs = require("ejs");
-var mysql = require("mysql2");
-var dotenv = require("dotenv");
+// Import express, express-session, express-sanitizer, ejs, MySQL2, dotenv, path
+const express = require("express");
+const session = require("express-session");
+const expressSanitizer = require("express-sanitizer");
+const ejs = require("ejs");
+const mysql = require("mysql2");
+const dotenv = require("dotenv");
 const path = require('path');
 
 // Create the express application object
@@ -25,6 +26,7 @@ const db = mysql.createPool({
 });
 global.db = db;
 
+// Use the express-session middleware to store login sessions.
 app.use(session({
     secret: process.env.BB_SESSION_SECRET,
     resave: false,
@@ -33,6 +35,9 @@ app.use(session({
         expires: 600000
     }
 }));
+
+// Use the express-sanitize module to create an input sanitizer to protect against XSS attacks.
+app.use(expressSanitizer());
 
 // Tell Express that we want to use EJS as the templating engine
 app.set('view engine', 'ejs')

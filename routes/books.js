@@ -12,12 +12,15 @@ router.get('/search_result', function (req, res, next) {
     //searching in the database
     // res.send("You searched for: " + req.query.search_text);
 
+    const searchText = req.sanitize(req.query.search_text);
+
     // SQL query. PARTIAL NAME MATCH.
-    let sqlQuery = `SELECT * FROM books WHERE name LIKE '%${req.query.search_text}%'`;
+    let sqlQuery = `SELECT * FROM books WHERE name LIKE '%${searchText}%'`;
 
     // Perform the query
     db.query(sqlQuery, (err, result) => {
-        if (err) next (err);
+        if (err) 
+            return next (err);
         res.render("search_result.ejs", {searchResults: result});
     });
 });
@@ -57,14 +60,17 @@ router.post('/bookadded', function (req, res, next) {
     // SQL query to save data in database
     let sqlquery = "INSERT INTO books (name, price) VALUES (?,?)";
 
+    const bookTitle = req.sanitize(req.body.book_title);
+    const bookPrice = req.body.book_price;
+
     // Execute the query
-    let newrecord = [req.body.book_title, req.body.book_price];
+    let newrecord = [bookTitle, bookPrice];
     db.query(sqlquery, newrecord, (err, result) => {
         if (err)
-            next(err);
-        else
-            // Show the user the book they added to the database.
-            res.send(`This book is added to database, name: ${req.body.book_title}, price: £${req.body.book_price}.`);
+            return next(err);
+
+        // Show the user the book they added to the database.
+        res.send(`This book is added to database, name: ${bookTitle}, price: £${bookPrice}.`);
     });
 })
 

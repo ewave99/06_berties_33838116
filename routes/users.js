@@ -86,12 +86,16 @@ router.post('/registered',
             return res.render("./register", {hasError: true, errors: errors.errors});
 
         // Save data in database
-        const plainPassword = req.body.password;
+        const plainPassword = req.sanitize(req.body.password);
         bcrypt.hash(plainPassword, saltRounds, function(err, hashedPassword) {
             // Store hashed password in your database.
             const dbQuery = `INSERT INTO users (username, first_name, last_name, email, hashed_password)
             VALUES (?, ?, ?, ?, ?)`;
-            const {username, first, last, email} = req.body;
+            // const {username, first, last, email} = req.body;
+            const username = req.sanitize(req.body.username);
+            const first = req.sanitize(req.body.first);
+            const last = req.sanitize(req.body.last);
+            const email = req.sanitize(req.body.email);
             const newRecord = [username, first, last, email, hashedPassword];
 
             if (err)
@@ -114,16 +118,18 @@ router.post('/registered',
 router.post("/loggedin", function (req, res, next) {
     // Select the hashed password from the database, where the username matches the username entered.
     const sqlQuery = "SELECT hashed_password FROM users WHERE username = ?";
-    const params = [req.body.username];
-    db.query(sqlQuery, params, (err, result) => {
+    const username = req.sanitize(req.body.username);
+    const plainPassword = req.sanitize(req.body.password);
+
+    db.query(sqlQuery, [username], (err, result) => {
         if (err)
             // If username does not exist in database... Send an error message.
             return res.send(err);
 
         let hashedPassword = result[0].hashed_password;
+
         // Compare the user's password with the hashed password in the database.
-        bcrypt.compare(req.body.password, hashedPassword, function (err, result) {
-            const username = req.body.username;
+        bcrypt.compare(plainPassword, hashedPassword, function (err, result) {
             const dateString = generateDateString();
             const successful = result;
 
@@ -138,7 +144,7 @@ router.post("/loggedin", function (req, res, next) {
                     return res.send(err);
 
                 if (successful === true) {
-                    req.session.userId = req.body.username;
+                    req.session.userId = username;
                     return res.send("Login successful. <a href='/'>Home</a>");
                 }
 
