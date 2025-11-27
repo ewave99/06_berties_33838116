@@ -1,12 +1,12 @@
-// Import express and bcrypt
+// Import express, bcrypt and express-validator
 const express = require("express")
 const bcrypt = require('bcrypt');
+const { check, validationResult } = require("express-validator");
 
 function redirectLogin(req, res, next) {
     if (!req.session.userId)
-        res.redirect("./login");
-    else
-        next();
+        return res.redirect("./login");
+    next();
 }
 
 function generateDateString() {
@@ -29,7 +29,7 @@ const saltRounds = 10;
 
 // Render registration form page for a new user.
 router.get('/register', function (req, res, next) {
-    res.render('register.ejs')
+    res.render('register.ejs', { hasError: false })
 });
 
 // Render login page for user.
@@ -53,9 +53,8 @@ router.get('/list', redirectLogin, function (req, res, next) {
     // Execute the query.
     db.query(sqlQuery, (err, result) => {
         if (err)
-            next(err);
-        else
-            res.render("list_users.ejs", {userData: result});
+            return next(err);
+        res.render("list_users.ejs", {userData: result});
     });
 });
 
@@ -65,36 +64,45 @@ router.get("/audit", redirectLogin, function (req, res, next) {
     // Execute the query
     db.query(sqlQuery, (err, result) => {
         if (err)
-            next(err);
-        else {
-            console.log(result[0].login_datetime);
-            res.render("list_audits.ejs", {auditData: result});
-        }
+            return next(err);
+
+        console.log(result[0].login_datetime);
+        res.render("list_audits.ejs", {auditData: result});
     });
 });
 
 // Render the registration success page.
-router.post('/registered', function (req, res, next) {
-    // Save data in database
-    const plainPassword = req.body.password;
-    bcrypt.hash(plainPassword, saltRounds, function(err, hashedPassword) {
-        // Store hashed password in your database.
-        const dbQuery = `INSERT INTO users (username, first_name, last_name, email, hashed_password)
-        VALUES (?, ?, ?, ?, ?)`;
-        const {username, first, last, email} = req.body;
-        const newRecord = [username, first, last, email, hashedPassword];
+router.post('/registered', 
+    [
+        check("email").isEmail(), 
+        check("username").isLength({ min: 5, max: 20 })
+    ], 
+    (req, res, next) => {
+        // Check whether there are any errors with the form submission.
+        const errors = validationResult(req);
+        if (!errors.isEmpty())
+            return res.render("./register", {hasError: true});
 
-        db.query(dbQuery, newRecord, (err, result) => {
-            if (err)
-                next(err);
-            else {
-                let message = `Hello, ${username}. You are now registered! We will send an email to you at ${email}.`;
-                message += `Your password is ${plainPassword} and your hashed password is ${hashedPassword}`;
+        // Save data in database
+        const plainPassword = req.body.password;
+        bcrypt.hash(plainPassword, saltRounds, function(err, hashedPassword) {
+            // Store hashed password in your database.
+            const dbQuery = `INSERT INTO users (username, first_name, last_name, email, hashed_password)
+            VALUES (?, ?, ?, ?, ?)`;
+            const {username, first, last, email} = req.body;
+            const newRecord = [username, first, last, email, hashedPassword];
+
+            db.query(dbQuery, newRecord, (err, result) => {
+                if (err)
+                    return next(err);
+                let message = `Hello, ${username}. You are now registered! We will send an email to you at ${email}.<br>`;
+                message += `Your password is ${plainPassword} and your hashed password is ${hashedPassword}<br>`;
+                message += "<a href='/'>Home</a>";
                 res.send(message);
-            }
-        })
-    });                                                                        
-}); 
+            })
+        });                                                                        
+    }
+); 
 
 // Process the user's login details and render either a success or failure page.
 router.post("/loggedin", function (req, res, next) {
@@ -104,33 +112,33 @@ router.post("/loggedin", function (req, res, next) {
     db.query(sqlQuery, params, (err, result) => {
         if (err)
             // If username does not exist in database... Send an error message.
-            res.send(err);
-        else {
-            let hashedPassword = result[0].hashed_password;
-            // Compare the user's password with the hashed password in the database.
-            bcrypt.compare(req.body.password, hashedPassword, function (err, result) {
-                const username = req.body.username;
-                const dateString = generateDateString();
-                const successful = result;
+            return res.send(err);
 
-                const sqlQuery = "INSERT INTO logins (username, login_datetime, successful) VALUES (?, ?, ?)";
-                const params = [username, dateString, successful];
+        let hashedPassword = result[0].hashed_password;
+        // Compare the user's password with the hashed password in the database.
+        bcrypt.compare(req.body.password, hashedPassword, function (err, result) {
+            const username = req.body.username;
+            const dateString = generateDateString();
+            const successful = result;
 
-                if (err)
-                    res.send(err);
-                else
-                    db.query(sqlQuery, params, (err, result) => {
-                        if (err)
-                            res.send(err);
-                        if (successful === true) {
-                            req.session.userId = req.body.username;
-                            res.send("Login successful. <a href='/'>Home</a>");
-                        }
-                        else
-                            res.send("Sorry, your login was unsuccessful. Password did not match. Attempt has been logged.");
-                    });
-            });
-        }
+            const sqlQuery = "INSERT INTO logins (username, login_datetime, successful) VALUES (?, ?, ?)";
+            const params = [username, dateString, successful];
+
+            if (err)
+                res.send(err);
+            else
+                db.query(sqlQuery, params, (err, result) => {
+                    if (err)
+                        return res.send(err);
+
+                    if (successful === true) {
+                        req.session.userId = req.body.username;
+                        return res.send("Login successful. <a href='/'>Home</a>");
+                    }
+
+                    res.send("Sorry, your login was unsuccessful. Password did not match. Attempt has been logged.");
+                });
+        });
     });
 });
 
