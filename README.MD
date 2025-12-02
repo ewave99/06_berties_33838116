@@ -40,3 +40,9 @@ The "Register" link only displays for logged-out users.
 
 All fields on the 'Register' and 'Login' forms are sanitised to protect against XSS attacks.
 The 'Book title' field in the 'Add book' form is sanitised as the result is displayed on the response page after the form is submitted.
+
+## API
+
+The API is accessed from the base URL `/api`. 
+
+The only API route so far is `/api/books`. It can take parameters `search` (text), `sort` ("name", "price" or "id"), `minprice` (number) and `maxprice` (number).
